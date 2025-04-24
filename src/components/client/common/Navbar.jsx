@@ -1,10 +1,17 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Heart, Stethoscope, GithubIcon as GitHubIcon, Activity, UserCheck } from "lucide-react";
+import {
+  Brain,
+  Heart,
+  Stethoscope,
+  GithubIcon as GitHubIcon,
+  Activity,
+  UserCheck,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -14,31 +21,31 @@ export default function Navbar() {
     {
       icon: <Brain className="h-8 w-8 text-primary" />,
       title: "Mental Health Counseling",
-      description: "Professional counseling services"
+      description: "Professional counseling services",
     },
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Emotional Support",
-      description: "24/7 emotional assistance"
+      description: "24/7 emotional assistance",
     },
     {
       icon: <Stethoscope className="h-8 w-8 text-primary" />,
       title: "Free Mental Health Check",
       description: "Quick assessment test",
-      button: "Take Test Now"
-    }
+      button: "Take Test Now",
+    },
   ];
 
   return (
     <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50  border-b  flex align-center">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between px-2">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/health-test-game" className="flex items-center space-x-2">
           <Activity className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl">HealthConnect</span>
         </Link>
 
         <div className="flex items-center space-x-6">
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setShowServices(true)}
             onMouseLeave={() => setShowServices(false)}
@@ -64,7 +71,9 @@ export default function Navbar() {
                         {service.icon}
                         <div>
                           <h3 className="font-medium">{service.title}</h3>
-                          <p className="text-sm text-muted-foreground">{service.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {service.description}
+                          </p>
                           {service.button && (
                             <Button variant="link" className="p-0 h-auto mt-1">
                               {service.button}
@@ -78,8 +87,6 @@ export default function Navbar() {
               )}
             </AnimatePresence>
           </div>
-
-        
         </div>
       </div>
     </nav>

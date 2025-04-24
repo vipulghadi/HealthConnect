@@ -7,15 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Carousel, CarouselItem } from "@/components/memoryTest/Caraousel";
 
 function generateSequence(length) {
-  const nums = [];
-  for (let i = 0; i < length; i++) {
-    nums.push(Math.floor(Math.random() * 9).toString());
-  }
-  return nums;
+  return Array.from({ length }, () => Math.floor(Math.random() * 9).toString());
 }
 
 export default function ImmediateMemoryTestPage() {
-  const [stage, setStage] = useState("intro"); // intro | demo | sample | test | result
+  const [stage, setStage] = useState("intro");
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [sequence, setSequence] = useState([]);
   const [userInput, setUserInput] = useState("");
@@ -23,15 +19,21 @@ export default function ImmediateMemoryTestPage() {
   const [level, setLevel] = useState(1);
   const [incorrectAttempts, setIncorrectAttempts] = useState(0);
   const [showSequence, setShowSequence] = useState(true);
+  const [responseStartTime, setResponseStartTime] = useState(null);
+  const [attempts, setAttempts] = useState([]);
 
   useEffect(() => {
-    const storedScore = localStorage.getItem("memoryTestScore");
-    if (storedScore) setScore(parseInt(storedScore));
+    const saved = localStorage.getItem("memoryTestAttempts");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setAttempts(parsed);
+      setScore(parsed.filter((a) => a.isCorrect).length);
+    }
   }, []);
 
   const nextSlide = () => {
-    if (carouselIndex < 2) setCarouselIndex(carouselIndex + 1);
-    else setStage("sample");
+    setCarouselIndex((prev) => (prev < 2 ? prev + 1 : prev));
+    if (carouselIndex === 2) setStage("sample");
   };
 
   const startSequence = (len = 5) => {
@@ -40,7 +42,11 @@ export default function ImmediateMemoryTestPage() {
     setShowSequence(true);
     setUserInput("");
     speakSequence(seq);
-    setTimeout(() => setShowSequence(false), 3000);
+
+    setTimeout(() => {
+      setShowSequence(false);
+      setResponseStartTime(Date.now());
+    }, 3000);
   };
 
   const speakSequence = (seq) => {
@@ -52,44 +58,65 @@ export default function ImmediateMemoryTestPage() {
     }
   };
 
-  const startSample = () => {
-    startSequence(3);
-  };
+  const startSample = () => startSequence(3);
 
   const startTest = () => {
-    startSequence(level + 2);
     setStage("test");
+    startSequence(level + 2);
   };
 
   const handleSubmit = () => {
+    const now = Date.now();
+    const responseTime = responseStartTime
+      ? parseFloat(((now - responseStartTime) / 1000).toFixed(2))
+      : 10.0;
+
     const isCorrect = userInput.trim() === sequence.join("");
+    const newScore = isCorrect ? score + 1 : score;
+    const totalAttempts = attempts.length + 1;
+    const accuracy = parseFloat(((newScore / totalAttempts) * 100).toFixed(2));
+
+    const newAttempt = {
+      id: totalAttempts,
+      isCorrect,
+      response_time: responseTime,
+      accuracy,
+      timestamp: new Date().toISOString(),
+    };
+
+    const updatedAttempts = [...attempts, newAttempt];
+    setAttempts(updatedAttempts);
+    localStorage.setItem("memoryTestAttempts", JSON.stringify(updatedAttempts));
+    setScore(newScore);
 
     if (isCorrect) {
-      const newScore = score + 1;
-      const newLevel = level + 1;
-      setScore(newScore);
-      setLevel(newLevel);
-      localStorage.setItem("memoryTestScore", newScore);
+      setLevel((prev) => prev + 1);
+      startSequence(level + 3);
     } else {
-      const newIncorrectAttempts = incorrectAttempts + 1;
-      setIncorrectAttempts(newIncorrectAttempts);
-      if (newIncorrectAttempts >= 2) {
+      const newIncorrect = incorrectAttempts + 1;
+      setIncorrectAttempts(newIncorrect);
+      if (newIncorrect >= 2) {
         setStage("result");
+      } else {
+        startSequence(level + 2);
       }
     }
 
-    if (incorrectAttempts < 2) {
-      startSequence(level + 2); // Increase difficulty for next round
-    } else {
-      setStage("result"); // Show result after 2 incorrect attempts
-    }
+    setResponseStartTime(null);
+    setUserInput("");
   };
 
   const reset = () => {
     setStage("intro");
     setCarouselIndex(0);
     setLevel(1);
+    setScore(0);
     setIncorrectAttempts(0);
+    setUserInput("");
+    setAttempts([]);
+    setResponseStartTime(null);
+
+    localStorage.removeItem("memoryTestAttempts");
   };
 
   return (
@@ -102,14 +129,9 @@ export default function ImmediateMemoryTestPage() {
                 🎧 Auditory Memory Challenge
               </h2>
               <p className="text-sm text-gray-700">
-                A direct measure of <strong>auditory short-term memory</strong>.
-                This test involves hearing or reading digit sequences and
-                immediately repeating them. It becomes more difficult with
-                longer sequences. It evaluates{" "}
-                <strong>attention span, retention</strong>, and the ability to
-                recall data under cognitive pressure—key traits of{" "}
-                <strong>intelligence</strong> and{" "}
-                <strong>mental alertness</strong>.
+                Test your <strong>auditory short-term memory</strong>. Hear
+                numbers, recall quickly, and type them in. Challenge increases
+                as you succeed!
               </p>
               <Button className="mt-4" onClick={() => setStage("demo")}>
                 Start Demo
@@ -122,14 +144,12 @@ export default function ImmediateMemoryTestPage() {
               <h2 className="text-xl font-bold mb-2">How It Works</h2>
               <Carousel activeIndex={carouselIndex}>
                 <CarouselItem>
-                  👂 You’ll hear a short sequence of numbers.
+                  👂 Hear a short sequence of numbers.
                 </CarouselItem>
                 <CarouselItem>
-                  ⌛ Remember them quickly—only 3 seconds!
+                  ⏳ Remember quickly — just 3 seconds!
                 </CarouselItem>
-                <CarouselItem>
-                  🎯 Type them in order. Levels increase if correct!
-                </CarouselItem>
+                <CarouselItem>✍️ Type them in. Levels get harder!</CarouselItem>
               </Carousel>
               <Button className="mt-4" onClick={nextSlide}>
                 Next
@@ -192,15 +212,28 @@ export default function ImmediateMemoryTestPage() {
 
           {stage === "result" && (
             <div>
-              <h2 className="text-xl font-bold">🎉 Result</h2>
-              <p className="text-base">Score: {score}</p>
-              <p className="text-sm text-gray-600">Level: {level}</p>
-              <p className="text-sm mt-2">
-                Correct Sequence:{" "}
-                <span className="font-mono">{sequence.join("")}</span>
+              <h2 className="text-xl font-bold">🎉 Final Result</h2>
+              <p className="text-base font-semibold">Score: {score}</p>
+              <p className="text-sm">Attempts: {attempts.length}</p>
+              <p className="text-sm mb-2">
+                Accuracy:{" "}
+                {attempts.length > 0
+                  ? ((score / attempts.length) * 100).toFixed(2)
+                  : "0"}
+                %
               </p>
+              <div className="text-left max-h-48 overflow-y-auto text-sm bg-gray-100 p-2 rounded-md">
+                {attempts.map((attempt) => (
+                  <div key={attempt.id} className="mb-1">
+                    <strong>Q{attempt.id}</strong>: ✅
+                    {attempt.isCorrect ? "Correct" : "Wrong"} | ⏱{" "}
+                    {attempt.response_time}s | 🎯 {attempt.accuracy}% | 🕒{" "}
+                    {new Date(attempt.timestamp).toLocaleString()}
+                  </div>
+                ))}
+              </div>
               <div className="mt-4 space-x-2">
-                <Button onClick={reset}>Restart Game</Button>
+                <Button onClick={reset}>Restart</Button>
               </div>
             </div>
           )}
