@@ -140,7 +140,7 @@ export default function StartTestPage() {
               className="flex justify-center"
             >
               <h1 className="text-3xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                🧠 Cognitive Quest 🚀
+                🧠 Real Time IQ And EQ Test 🚀
               </h1>
             </motion.div>
 
@@ -154,7 +154,7 @@ export default function StartTestPage() {
               >
                 <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                   <p className="text-indigo-800 font-medium">
-                    🎮 Welcome to the Cognitive Challenge! 🎮
+                    🎮 Welcome to the IQ / EQ Test ! 🎮
                   </p>
                   <p className="mt-2 text-indigo-700">
                     Complete these mental quests to unlock your brain's
@@ -164,27 +164,8 @@ export default function StartTestPage() {
 
                 <div className="space-y-2 text-gray-700">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="text-yellow-500" size={16} />
-                    <p className="font-medium">Your Mission:</p>
+                    {/* <Sparkles className="text-yellow-500" size={16} /> */}
                   </div>
-                  <ul className="space-y-2 pl-6">
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600">✓</span>
-                      <span>5 exciting cognitive challenges await</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600">✓</span>
-                      <span>Earn points for speed and accuracy</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600">✓</span>
-                      <span>Unlock your personalized brain profile</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600">✓</span>
-                      <span>Compete with friends (coming soon!)</span>
-                    </li>
-                  </ul>
                 </div>
 
                 <div className="space-y-4">
@@ -260,7 +241,7 @@ export default function StartTestPage() {
                         Loading Adventure...
                       </span>
                     ) : (
-                      "🚀 Start Cognitive Quest!"
+                      "🚀 Check your IQ!"
                     )}
                   </Button>
 
