@@ -5,6 +5,9 @@ const nextConfig = {
       ignoreDuringBuilds: true,
     },
     images: { unoptimized: true },
+    experimental: {
+        optimizeFonts: false,
+      },
   };
 
   export default nextConfig;
