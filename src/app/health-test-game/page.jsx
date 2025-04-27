@@ -10,6 +10,7 @@ import KohTest from "@/components/kohs/KohsTest";
 import ImmediateMemoryTestPage from "@/components/memoryTest/MemoryTest";
 import PassAlongTest from "@/components/passalong/PassAlongTest";
 import Result from "@/components/TestResult/Result";
+import ChatbotPage from "../chatbot/page"; // assuming you have this
 
 const CustomSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +76,7 @@ export default function StartTestPage() {
   const [testResults, setTestResults] = useState([]);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isEQTest, setIsEQTest] = useState(false); // <-- NEW state for EQ Test
 
   const games = ["kohs", "imt", "pat"];
   const educationOptions = [
@@ -88,11 +90,7 @@ export default function StartTestPage() {
       setTimeout(() => {
         localStorage.setItem(
           "userDetails",
-          JSON.stringify({
-            name,
-            age,
-            educationLevel,
-          })
+          JSON.stringify({ name, age, educationLevel })
         );
         localStorage.setItem("testResponses", JSON.stringify([]));
         setCurrTest(games[0]);
@@ -113,6 +111,10 @@ export default function StartTestPage() {
     } else {
       setIsTestCompleted(true);
     }
+  };
+
+  const handleEQTest = () => {
+    setIsEQTest(true); // switch to EQ test (chatbot)
   };
 
   return (
@@ -142,7 +144,9 @@ export default function StartTestPage() {
               </h1>
             </motion.div>
 
-            {currTest === "" ? (
+            {isEQTest ? (
+              <Chatbot /> // <--- If EQ selected, directly show chatbot
+            ) : currTest === "" ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isAnimating ? 0 : 1 }}
@@ -230,12 +234,14 @@ export default function StartTestPage() {
                   </motion.div>
                 </div>
 
+                {/* Start Buttons */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  className="flex flex-col gap-4"
                 >
                   <Button
-                    className={`w-full mt-4 py-6 text-lg font-bold transition-all ${
+                    className={`w-full py-6 text-lg font-bold transition-all ${
                       !name || !age || !educationLevel
                         ? "bg-gray-300 cursor-not-allowed"
                         : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
@@ -256,6 +262,14 @@ export default function StartTestPage() {
                     ) : (
                       "🚀 Start Cognitive Quest!"
                     )}
+                  </Button>
+
+                  {/* NEW EQ Button */}
+                  <Button
+                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
+                    onClick={handleEQTest}
+                  >
+                    🎭 Start EQ Test
                   </Button>
                 </motion.div>
               </motion.div>

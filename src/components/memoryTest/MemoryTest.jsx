@@ -164,7 +164,7 @@ export default function ImmediateMemoryTestPage() {
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
           <CardTitle className="text-2xl flex items-center gap-2">
             <Volume2 className="h-6 w-6" />
-            Memory Challenge
+            Immidiate Memory Test
           </CardTitle>
           <div className="flex justify-between text-sm mt-2">
             <span>Forward: {scores.forward}/9</span>
