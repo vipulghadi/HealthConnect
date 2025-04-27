@@ -3,77 +3,83 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Timer } from "@/components/client/common/timer";
-import toast, { Toaster } from "react-hot-toast"; // Correct import
+import toast, { Toaster } from "react-hot-toast";
+import { Progress } from "@/components/ui/progress";
 
 const images = [
   {
     id: 1,
-    src: "https://images.unsplash.com/photo-1742812174810-c7525d200248?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    src: "https://images.unsplash.com/photo-1541963463532-d68292c34b19",
+    name: "Book",
     difficulty: "easy",
   },
   {
     id: 2,
-    src: "https://images.unsplash.com/photo-1742812174810-c7525d200248?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-
+    src: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d",
+    name: "City",
     difficulty: "easy",
   },
   {
     id: 3,
-    src: "https://images.unsplash.com/photo-1742812174810-c7525d200248?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-
-    difficulty: "easy",
+    src: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d",
+    name: "Forest",
+    difficulty: "medium",
   },
   {
     id: 4,
-    src: "https://unsplash.com/photos/a-lighthouse-stands-on-a-sandy-beach-PVeR1AyEyNY",
-
-    difficulty: "easy",
+    src: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308",
+    name: "Mountain",
+    difficulty: "hard",
   },
   {
     id: 5,
-    src: "https://unsplash.com/photos/palm-tree-stands-tall-against-a-blue-sky-cLQSOLGkhSk",
-    difficulty: "hard",
-  },
-  {
-    id: 6,
-    src: "https://unsplash.com/photos/palm-tree-stands-tall-against-a-blue-sky-cLQSOLGkhSk",
-    difficulty: "hard",
-  },
-  {
-    id: 7,
-    src: "https://unsplash.com/photos/palm-tree-stands-tall-against-a-blue-sky-cLQSOLGkhSk",
-    difficulty: "hard",
-  },
-  {
-    id: 8,
-    src: "https://source.unsplash.com/random/800x800?pattern",
+    src: "https://images.unsplash.com/photo-1429087969512-1e85aab2683d",
+    name: "Beach",
     difficulty: "hard",
   },
 ];
 
+const GRID_SIZES = [2, 3, 3, 4, 4]; // Grid sizes for levels 1-5
+const TIME_LIMITS = [60, 90, 120, 180, 240]; // Time limits for levels 1-5
+
 export function ImagePuzzleGame() {
-  const [imageIndex, setImageIndex] = useState(0);
-  const [gridSize, setGridSize] = useState(3);
+  const [level, setLevel] = useState(0);
+  const [gridSize, setGridSize] = useState(GRID_SIZES[0]);
   const [puzzle, setPuzzle] = useState([]);
   const [solved, setSolved] = useState(false);
   const [gameActive, setGameActive] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [startTime, setStartTime] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-  // Initialize puzzle
+  // Load score from localStorage
   useEffect(() => {
+    const savedScore = localStorage.getItem("total_scoregame2");
+    if (savedScore) {
+      setTotalScore(parseInt(savedScore, 10));
+    }
+  }, []);
+
+  // Initialize puzzle when level changes
+  useEffect(() => {
+    setGridSize(GRID_SIZES[level]);
+
     if (gameActive) return;
 
-    const totalPieces = gridSize * gridSize;
+    const totalPieces = GRID_SIZES[level] * GRID_SIZES[level];
     const pieces = Array.from({ length: totalPieces - 1 }, (_, i) => i + 1);
     pieces.push(null);
 
     const shuffled = shuffle([...pieces]);
     setPuzzle(shuffled);
     setSolved(false);
-  }, [gridSize, imageIndex, gameActive]);
+    setCurrentScore(0);
+    setProgress(0);
+  }, [level, gameActive]);
 
   // Check if puzzle is solved
   useEffect(() => {
@@ -81,27 +87,50 @@ export function ImagePuzzleGame() {
 
     const isPuzzleSolved = checkSolved(puzzle);
     if (isPuzzleSolved) {
+      const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      const score = calculateScore(elapsedTime);
+      setCurrentScore(score);
+
+      const newTotalScore = totalScore + score;
+      setTotalScore(newTotalScore);
+      localStorage.setItem("total_scoregame2", newTotalScore.toString());
+
       setGameActive(false);
       setSolved(true);
-      toast.success("Congratulations! Puzzle solved!", {
-        position: "top-center",
-      });
+
+      toast.success(
+        `Level ${level + 1} completed! You earned ${score} points.`,
+        {
+          position: "top-center",
+        }
+      );
+
+      // Auto-progress to next level after delay
+      setTimeout(() => {
+        if (level < images.length - 1) {
+          setLevel((prev) => prev + 1);
+        }
+      }, 2000);
+    } else {
+      // Update progress
+      const correctPieces = puzzle.filter((p, i) => p === i + 1).length;
+      const totalPieces = puzzle.length - 1;
+      setProgress(Math.floor((correctPieces / totalPieces) * 100));
     }
   }, [puzzle, gameActive]);
 
   // Time management
   useEffect(() => {
-    const currentImage = images[imageIndex];
-    const initialTime = currentImage.difficulty === "easy" ? 120 : 300;
-
     if (gameActive) {
-      setTimeLeft(initialTime);
+      setTimeLeft(TIME_LIMITS[level]);
+      setStartTime(Date.now());
+
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
             setGameActive(false);
-            toast.error("Time's up! Game over!", {
+            toast.error("Time's up! Try again!", {
               position: "top-center",
             });
             return 0;
@@ -112,7 +141,20 @@ export function ImagePuzzleGame() {
 
       return () => clearInterval(timer);
     }
-  }, [gameActive, imageIndex]);
+  }, [gameActive, level]);
+
+  const calculateScore = (elapsedSeconds) => {
+    const timeLimit = TIME_LIMITS[level];
+    const timePercentage = 1 - elapsedSeconds / timeLimit;
+
+    // Base score based on level (higher levels give more points)
+    const baseScore = (level + 1) * 5;
+
+    // Score is baseScore multiplied by time percentage (faster completion = higher score)
+    const score = Math.max(1, Math.floor(baseScore * timePercentage));
+
+    return score;
+  };
 
   const movePiece = (index) => {
     if (!gameActive || solved) return;
@@ -147,7 +189,10 @@ export function ImagePuzzleGame() {
     setPuzzle(shuffled);
     setSolved(false);
     setGameActive(true);
-    toast("Game started! Good luck!", {
+    setCurrentScore(0);
+    setProgress(0);
+
+    toast(`Level ${level + 1} started!`, {
       position: "top-center",
     });
   };
@@ -204,125 +249,182 @@ export function ImagePuzzleGame() {
     return puzzle[puzzle.length - 1] === null;
   };
 
-  const nextQuestion = () => {
-    setImageIndex((prev) => (prev + 1) % images.length);
+  const resetGame = () => {
+    setLevel(0);
+    setTotalScore(0);
+    localStorage.removeItem("total_scoregame2");
     setGameActive(false);
-    toast("Moving to next image!", {
-      position: "top-center",
-    });
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
-      <Toaster /> {/* Add Toaster component */}
-      <div className="w-full lg:w-1/2 space-y-4">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="text-center space-y-2">
-            <h2 className="text-xl font-semibold">
-              Question {imageIndex + 1}:{" "}
-              {images[imageIndex].difficulty.charAt(0).toUpperCase() +
-                images[imageIndex].difficulty.slice(1)}{" "}
-              Level
+    <div className="flex flex-col min-h-screen p-4 bg-gradient-to-br from-blue-50 to-purple-50">
+      <Toaster />
+
+      <div className="flex flex-col lg:flex-row gap-8 items-center justify-center flex-grow">
+        {/* Target Image on Left */}
+        <div className="w-full lg:w-1/3 flex flex-col items-center">
+          <div className="bg-white p-4 rounded-xl shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold text-center mb-2">
+              Level {level + 1}: {images[level].name}
             </h2>
-            {gameActive && <Timer timeLeft={timeLeft} />}
-          </div>
-
-          <div className="flex items-center justify-center space-x-2">
-            <span className="text-sm font-medium">
-              Grid Size: {gridSize}x{gridSize}
-            </span>
-            <Slider
-              className="w-32"
-              min={2}
-              max={5}
-              step={1}
-              value={[gridSize]}
-              onValueChange={(values) => setGridSize(values[0])}
-              disabled={gameActive}
-            />
-          </div>
-
-          <div className="space-x-2">
-            <Button onClick={startGame} disabled={gameActive}>
-              {solved ? "Play Again" : "Start Game"}
-            </Button>
-            <Button
-              onClick={nextQuestion}
-              disabled={gameActive && !solved}
-              variant="outline"
-            >
-              Next Image
-            </Button>
+            <div className="relative aspect-square w-full rounded-lg overflow-hidden border-4 border-primary">
+              <Image
+                src={images[level].src}
+                alt="Complete puzzle reference"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Difficulty: {images[level].difficulty}
+              </p>
+              <p className="text-sm text-gray-600">
+                Grid: {gridSize}x{gridSize}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div
-          className="relative border-2 border-primary rounded-lg overflow-hidden"
-          style={{
-            width: "min(100%, 500px)",
-            height: "min(100vw, 500px)",
-            margin: "0 auto",
-          }}
-        >
-          <div
-            className="grid gap-1 bg-muted h-full w-full"
-            style={{
-              gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
-              gridTemplateRows: `repeat(${gridSize}, 1fr)`,
-            }}
-          >
-            {puzzle.map((piece, index) => (
-              <motion.div
-                key={index}
-                className={`relative ${
-                  piece === null ? "invisible" : "cursor-pointer"
-                }`}
-                onClick={() => movePiece(index)}
-                layout
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                whileHover={{ scale: !gameActive || piece === null ? 1 : 1.05 }}
+        {/* Game Board on Right */}
+        <div className="w-full lg:w-2/3 flex flex-col items-center">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h1 className="text-2xl font-bold">Puzzle Game</h1>
+                <p className="text-sm text-gray-600">
+                  Complete the puzzle to advance to the next level!
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-semibold">
+                  Score: <span className="text-primary">{totalScore}</span>
+                </div>
+                {gameActive && (
+                  <Timer timeLeft={timeLeft} totalTime={TIME_LIMITS[level]} />
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <Progress value={progress} className="h-3" />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Progress: {progress}%</span>
+                {gameActive && <span>Time left: {timeLeft}s</span>}
+              </div>
+            </div>
+
+            <div
+              className="relative mx-auto bg-gray-100 rounded-lg overflow-hidden"
+              style={{
+                width: "100%",
+                aspectRatio: "1/1",
+                maxWidth: "500px",
+              }}
+            >
+              <div
+                className="grid h-full w-full gap-1"
+                style={{
+                  gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+                  gridTemplateRows: `repeat(${gridSize}, 1fr)`,
+                }}
               >
-                {piece !== null && (
-                  <div className="w-full h-full relative overflow-hidden border border-border">
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        backgroundImage: `url(${images[imageIndex].src})`,
-                        backgroundSize: `${gridSize * 100}%`,
-                        backgroundPosition: `${
-                          (((piece - 1) % gridSize) / (gridSize - 1)) * 100
-                        }% ${
-                          (Math.floor((piece - 1) / gridSize) /
-                            (gridSize - 1)) *
-                          100
-                        }%`,
-                      }}
-                    />
-                    {!gameActive && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/50 font-bold text-lg">
-                        {piece}
+                {puzzle.map((piece, index) => (
+                  <motion.div
+                    key={index}
+                    className={`relative ${
+                      piece === null ? "invisible" : "cursor-pointer"
+                    }`}
+                    onClick={() => movePiece(index)}
+                    layout
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    whileHover={{
+                      scale: !gameActive || piece === null ? 1 : 1.05,
+                    }}
+                  >
+                    {piece !== null && (
+                      <div className="w-full h-full relative overflow-hidden border border-gray-300 rounded-sm">
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            backgroundImage: `url(${images[level].src})`,
+                            backgroundSize: `${gridSize * 100}%`,
+                            backgroundPosition: `${
+                              (((piece - 1) % gridSize) / (gridSize - 1)) * 100
+                            }% ${
+                              (Math.floor((piece - 1) / gridSize) /
+                                (gridSize - 1)) *
+                              100
+                            }%`,
+                          }}
+                        />
+                        {!gameActive && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 font-bold text-white bg-repeat:no-repeat">
+                            {piece}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-center gap-4">
+              <Button
+                onClick={startGame}
+                disabled={gameActive && !solved}
+                className="px-6 py-3"
+              >
+                {solved
+                  ? level < images.length - 1
+                    ? "Next Level"
+                    : "Play Again"
+                  : "Start Game"}
+              </Button>
+              <Button
+                onClick={resetGame}
+                variant="outline"
+                className="px-6 py-3"
+              >
+                Reset Game
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-      <div className="w-full lg:w-1/2 flex justify-center">
-        <div
-          className="relative border-2 border-primary rounded-lg overflow-hidden"
-          style={{ width: "min(100%, 500px)", height: "min(100vw, 500px)" }}
-        >
-          <Image
-            src={images[imageIndex].src || "/placeholder.svg"}
-            alt="Complete puzzle reference"
-            fill
-            sizes="(max-width: 768px) 100vw, 500px"
-            className="object-cover"
-            priority
-          />
+
+      {/* Score and Level Progress at Bottom */}
+      <div className="mt-8 bg-white p-4 rounded-xl shadow-lg max-w-4xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-center sm:text-left">
+            <h3 className="font-semibold">Current Level Progress</h3>
+            <div className="flex items-center gap-2">
+              {images.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    idx <= level
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {idx + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-center">
+            <h3 className="font-semibold">Current Score</h3>
+            <div className="text-3xl font-bold text-primary">{totalScore}</div>
+          </div>
+          <div className="text-center sm:text-right">
+            <h3 className="font-semibold">Level {level + 1} Score</h3>
+            <div className="text-2xl font-bold text-blue-600">
+              +{currentScore}
+            </div>
+          </div>
         </div>
       </div>
     </div>

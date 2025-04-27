@@ -14,6 +14,11 @@ const Result = ({ testResults }) => {
       const kohsStr = localStorage.getItem("kohs_scores");
       const memoryStr = localStorage.getItem("memoryGameScores");
       const passAlongStr = localStorage.getItem("passAlongResponses");
+      const memoryGameScores = JSON.parse(
+        localStorage.getItem("memoryGameScores")
+      );
+
+      const totalScore4 = memoryGameScores.forward + memoryGameScores.reverse;
 
       let name = "N/A";
       let age = 18; // Default age
@@ -42,7 +47,7 @@ const Result = ({ testResults }) => {
         });
       }
 
-      const finalIQ = Math.round(totalScore * age); // Rounded nicely
+      const finalIQ = Math.round(totalScore * age * 0.5); // Rounded nicely
 
       setUserDetails({ name, age });
       setIqScore(finalIQ);

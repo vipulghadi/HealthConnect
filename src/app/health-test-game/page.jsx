@@ -11,7 +11,7 @@ import ImmediateMemoryTestPage from "@/components/memoryTest/MemoryTest";
 import PassAlongTest from "@/components/passalong/PassAlongTest";
 import Result from "@/components/TestResult/Result";
 import ChatbotPage from "../chatbot/page"; // assuming you have this
-
+import { ImagePuzzleGame } from "@/components/client/common/image-puzzle-game";
 const CustomSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,6 +65,7 @@ const GAMES = {
   kohs: <KohTest />,
   imt: <ImmediateMemoryTestPage />,
   pat: <PassAlongTest />,
+  imgpz: <ImagePuzzleGame />,
 };
 
 export default function StartTestPage() {
@@ -78,7 +79,7 @@ export default function StartTestPage() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isEQTest, setIsEQTest] = useState(false); // <-- NEW state for EQ Test
 
-  const games = ["kohs", "imt", "pat"];
+  const games = ["kohs", "imt", "pat", "imgpz"];
   const educationOptions = [
     { value: "literate", label: "Literate" },
     { value: "illiterate", label: "Illiterate" },
