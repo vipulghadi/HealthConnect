@@ -1,37 +1,79 @@
-'use client'
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+"use client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { motion } from "framer-motion";
 
 export default function DesignCard({ design }) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Card className="flex justify-center items-center w-1/2 bg-amber-300  transition-transform duration-300 animate-fade-in">
-        
-            <CardContent className="">
-              <div className="grid grid-cols-3 gap-2  rounded-lg ">
-                {design.map((row, i) =>
-                  row.map((cell, j) => (
-                    <div
-                      key={`${i}-${j}`}
-                      className={`w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border border-gray-400 rounded-md`}
-                      aria-label={`${cell === 'empty' ? 'Empty' : cell} cell at row ${i + 1}, column ${j + 1}`}
-                    >
-                      <div
-                        className={`w-12 h-12 md:w-16 md:h-16 rounded-md shadow-md transition-transform
-                          ${cell === 'red' ? 'bg-red-600' : cell === 'blue' ? 'bg-blue-600' : 'bg-gray-200'}`}
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TooltipTrigger>
-        <TooltipContent>Match this pattern by moving blocks in the tray</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  )
+    <Card className="w-full bg-gradient-to-br from-amber-50 to-amber-100 backdrop-blur-sm shadow-lg overflow-hidden border-2 border-amber-300/50">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-lg font-semibold text-center text-amber-900">
+          Target Pattern
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-200 text-amber-800 text-xs cursor-default">
+                  ?
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs bg-amber-800 text-amber-50 border-amber-700">
+                <p className="text-sm">
+                  Recreate this pattern by moving blocks in the tray below
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <div className="grid grid-cols-3 gap-3 p-2 bg-amber-100/30 rounded-lg">
+          {design.map((row, i) => {
+            return row.map((cell, j) => {
+              return (
+                <motion.div
+                  key={`${i}-${j}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{
+                    delay: (i * 3 + j) * 0.05,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 10,
+                  }}
+                  className={`relative w-full aspect-square flex items-center justify-center rounded-md ${
+                    cell === "empty"
+                      ? "bg-amber-100/50 border-2 border-dashed border-amber-300/70"
+                      : "bg-white/20 shadow-inner"
+                  }`}
+                  aria-label={`${
+                    cell === "empty" ? "Empty" : cell
+                  } cell at row ${i + 1}, column ${j + 1}`}
+                >
+                  {cell !== "empty" && (
+                    <motion.div
+                      className={`absolute inset-1 rounded-md ${
+                        cell === "red"
+                          ? "bg-gradient-to-br from-red-500 to-red-600 shadow-red-400/30"
+                          : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-400/30"
+                      } shadow-md`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    />
+                  )}
+                  <span className="sr-only">
+                    {cell === "empty" ? "Empty space" : `${cell} block`}
+                  </span>
+                </motion.div>
+              );
+            });
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

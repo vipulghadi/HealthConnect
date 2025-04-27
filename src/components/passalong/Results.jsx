@@ -1,5 +1,12 @@
-'use client'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+"use client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Results({ responses }) {
   return (
@@ -22,7 +29,9 @@ export default function Results({ responses }) {
               <TableRow key={index}>
                 <TableCell>{response.design}</TableCell>
                 <TableCell>{response.responseTime.toFixed(1)}</TableCell>
-                <TableCell>{new Date(response.timestamp).toLocaleString()}</TableCell>
+                <TableCell>
+                  {new Date(response.timestamp).toLocaleString()}
+                </TableCell>
                 <TableCell>{response.score}</TableCell>
               </TableRow>
             ))}
@@ -30,5 +39,5 @@ export default function Results({ responses }) {
         </Table>
       )}
     </div>
-  )
+  );
 }
