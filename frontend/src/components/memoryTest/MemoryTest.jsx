@@ -20,29 +20,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
-
 function generateSequence(length) {
   return Array.from({ length }, () => Math.floor(Math.random() * 9).toString());
-}
-
-// Function to calculate IQ score based on correct answers
-function calculateIQScore(correctAnswers, totalQuestions) {
-  const percentage = correctAnswers / totalQuestions;
-  // Simplified IQ mapping: 50% correct = IQ 100, each 10% above/below adjusts by 15 points
-  const iq = Math.round(100 + (percentage - 0.5) * 150);
-  return Math.max(70, Math.min(130, iq)); // Cap IQ between 70 and 130
-}
-
-// Function to generate suggestions based on performance
-function generateSuggestions(correctAnswers, totalQuestions, testMode) {
-  const percentage = correctAnswers / totalQuestions;
-  if (percentage >= 0.8) {
-    return `Excellent performance in ${testMode} recall! To further enhance your skills, try increasing the sequence length or practicing with distractions.`;
-  } else if (percentage >= 0.5) {
-    return `Good effort in ${testMode} recall. Practice with similar sequences daily to improve accuracy and speed. Apps like Lumosity can help.`;
-  } else {
-    return `Your ${testMode} recall needs improvement. Start with shorter sequences and gradually increase difficulty. Focus on concentration techniques.`;
-  }
 }
 
 export default function ImmediateMemoryTestPage() {
@@ -59,10 +38,6 @@ export default function ImmediateMemoryTestPage() {
   const [lastAction, setLastAction] = useState(null);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState("forward");
-  const [questionId, setQuestionId] = useState(1); // Start at 1 to match JSON format
-  const [startTime, setStartTime] = useState(null);
-  const [totalCorrect, setTotalCorrect] = useState(0); // Track correct answers
-  const [totalQuestions, setTotalQuestions] = useState(0); // Track total questions
   const timerRef = useRef(null);
 
   // Game configuration
@@ -81,79 +56,16 @@ export default function ImmediateMemoryTestPage() {
     },
   };
 
-  // Initialize from localStorage and clear memoryTest
+  // Initialize from localStorage
   useEffect(() => {
-    // Clear existing memoryTest data
-    localStorage.removeItem("memoryTest");
-    localStorage.removeItem("memoryTestQuestions");
-    localStorage.removeItem("memoryGameScores");
-
-    // Initialize KohsTest data
-    const savedData = localStorage.getItem("kohsTestData");
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setScores({
-        forward: parsedData.totalScore || 0,
-        reverse: parsedData.totalScore || 0,
-      });
-      setTotalCorrect(parsedData.questions?.filter(q => q.isCorrect).length || 0);
-      setTotalQuestions(parsedData.questions?.length || 0);
-    } else {
-      setScores({ forward: 0, reverse: 0 });
-      setTotalCorrect(0);
-      setTotalQuestions(0);
-    }
-
-    // Reset other states
-    setSequence([]);
-    setUserInput("");
-    setLevel(3);
-    setMistakes(0);
-    setStage("intro");
-    setTestMode("forward");
-    setShowSequence(false);
-    setShowDemo(false);
-    setLastAction(null);
-    setShowTransition(false);
-    setTransitionDirection("forward");
-    setQuestionId(1);
-    setStartTime(null);
-
-    // Cleanup timer
+    const savedData = localStorage.getItem("memoryGameScores");
+    if (savedData) setScores(JSON.parse(savedData));
     return () => clearTimeout(timerRef.current);
   }, []);
 
-  // Save KohsTest data to localStorage
-  const saveKohsTestData = (newQuestion) => {
-    const responseTime = startTime ? (Date.now() - startTime) / 1000 : 0; // Convert to seconds
-    const existingData = localStorage.getItem("kohsTestData");
-    let kohsTestData = existingData
-      ? JSON.parse(existingData)
-      : {
-          gameName: "KohsTest",
-          totalScore: 0,
-          totalTimeTaken: 0,
-          questions: [],
-        };
-
-    // Update question data
-    kohsTestData.questions.push(newQuestion);
-    kohsTestData.totalScore = kohsTestData.questions.filter(q => q.isCorrect).length;
-    kohsTestData.totalTimeTaken = kohsTestData.questions.reduce(
-      (sum, q) => sum + q.responseTime,
-      0
-    );
-
-    // Calculate IQ score
-    const correctAnswers = kohsTestData.questions.filter(q => q.isCorrect).length;
-    const totalQuestions = kohsTestData.questions.length;
-    kohsTestData.iqScore = calculateIQScore(correctAnswers, totalQuestions);
-
-    // Add suggestions
-    kohsTestData.suggestions = generateSuggestions(correctAnswers, totalQuestions, testMode);
-
-    // Save to localStorage
-    localStorage.setItem("kohsTestData", JSON.stringify(kohsTestData));
+  // Save scores
+  const saveScores = () => {
+    localStorage.setItem("memoryGameScores", JSON.stringify(scores));
   };
 
   // Play sequence with speech
@@ -162,7 +74,6 @@ export default function ImmediateMemoryTestPage() {
     setSequence(seq);
     setShowSequence(true);
     setUserInput("");
-    setStartTime(Date.now());
 
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(
@@ -191,9 +102,6 @@ export default function ImmediateMemoryTestPage() {
     setStage("playing");
     setLevel(3);
     setMistakes(0);
-    setQuestionId(1);
-    setTotalCorrect(0);
-    setTotalQuestions(0);
     playSequence(3);
   };
 
@@ -205,27 +113,13 @@ export default function ImmediateMemoryTestPage() {
         : userInput === [...sequence].reverse().join("");
 
     setLastAction(isCorrect ? "correct" : "wrong");
-    setTotalQuestions(prev => prev + 1);
-    if (isCorrect) setTotalCorrect(prev => prev + 1);
-
-    // Create question data
-    const responseTime = startTime ? (Date.now() - startTime) / 1000 : 0; // Convert to seconds
-    const questionData = {
-      questionId,
-      isCorrect,
-      responseTime,
-    };
-
-    // Save to KohsTest data
-    saveKohsTestData(questionData);
-
-    setQuestionId(prev => prev + 1);
 
     if (isCorrect) {
       // Update score if this is the longest sequence remembered
       if (sequence.length > scores[testMode]) {
         const newScores = { ...scores, [testMode]: sequence.length };
         setScores(newScores);
+        saveScores();
       }
 
       // Increase difficulty or switch modes
@@ -234,6 +128,7 @@ export default function ImmediateMemoryTestPage() {
         playSequence(level + 1);
       } else {
         if (testMode === "forward") {
+          // Show demo before switching to reverse
           setStage("reverseDemo");
           playSequence(3, true);
         } else {
@@ -243,6 +138,7 @@ export default function ImmediateMemoryTestPage() {
     } else {
       setMistakes(mistakes + 1);
       if (mistakes >= 1) {
+        // End after 2 mistakes
         if (testMode === "forward" && scores.forward < 9) {
           setStage("reverseDemo");
           playSequence(3, true);
@@ -262,30 +158,13 @@ export default function ImmediateMemoryTestPage() {
     exit: { opacity: 0, y: -20 },
   };
 
-  // Display results on completion
-  const kohsTestData = JSON.parse(localStorage.getItem("kohsTestData") || "{}");
-  const completedContent = (
-    <div className="space-y-6 text-center">
-      <h3 className="text-xl font-bold">Test Complete</h3>
-      <div className="text-left">
-        <p><strong>IQ Score:</strong> {kohsTestData.iqScore || "N/A"}</p>
-        <p><strong>Total Score:</strong> {kohsTestData.totalScore || 0}</p>
-        <p><strong>Total Time Taken:</strong> {kohsTestData.totalTimeTaken?.toFixed(2) || 0} seconds</p>
-        <p><strong>Suggestions:</strong> {kohsTestData.suggestions || "No suggestions available."}</p>
-      </div>
-      <div className="space-x-4">
-        <Button onClick={() => setStage("intro")}>Retry</Button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
           <CardTitle className="text-2xl flex items-center gap-2">
             <Volume2 className="h-6 w-6" />
-            Kohs Memory Test
+            Immidiate Memory Test
           </CardTitle>
           <div className="flex justify-between text-sm mt-2">
             <span>Forward: {scores.forward}/9</span>
@@ -332,61 +211,235 @@ export default function ImmediateMemoryTestPage() {
           {stage === "intro" && (
             <div className="space-y-6 text-center">
               <CardDescription>
-                Listen to numbers being spoken and then repeat them back either
-                in the same order or in reverse order.
+                Listen to numbers and recall them in order or reverse. Each
+                correct sequence increases difficulty.
               </CardDescription>
-              <div className="flex justify-center gap-4">
-                <Button onClick={() => startGame("forward")}>Start Forward</Button>
-                <Button onClick={() => startGame("reverse")}>Start Reverse</Button>
+
+              {showDemo && (
+                <div className="bg-gray-100 rounded-lg p-4 animate-pulse">
+                  <div className="flex justify-center gap-2 mb-2">
+                    <AnimatePresence mode="popLayout">
+                      {[3, 7, 2].map((num, i) => (
+                        <motion.span
+                          key={i}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          variants={digitVariants}
+                          className="text-2xl font-mono bg-white p-2 rounded"
+                        >
+                          {num}
+                        </motion.span>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {testMode === "forward" ? "Enter: 3 7 2" : "Enter: 2 7 3"}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <Button className="w-full" onClick={() => startGame("forward")}>
+                  Start Forward Test
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowDemo(!showDemo)}
+                >
+                  {showDemo ? "Hide Demo" : "Show Demo"}
+                </Button>
               </div>
             </div>
           )}
 
-          {/* Playing Screen */}
-          {stage === "playing" && (
+          {/* Reverse Recall Demo */}
+          {stage === "reverseDemo" && (
             <div className="space-y-6 text-center">
-              {showSequence && (
-                <div className="text-4xl font-bold">{sequence.join(" ")}</div>
-              )}
-              {!showSequence && (
-                <div>
-                  <h3 className="text-lg mb-4">Enter numbers:</h3>
-                  <Input
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    type="text"
-                    placeholder="Type your answer"
-                  />
-                  <Button className="mt-4" onClick={handleSubmit}>
-                    Submit Answer
+              <h3 className="text-xl font-bold">Reverse Recall Demo</h3>
+              <p className="text-gray-600">
+                Now you'll need to enter the numbers in reverse order
+              </p>
+
+              {showSequence ? (
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="flex justify-center gap-2 mb-2">
+                    <AnimatePresence mode="popLayout">
+                      {sequence.map((num, i) => (
+                        <motion.span
+                          key={i}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          variants={digitVariants}
+                          className="text-2xl font-mono bg-white p-2 rounded"
+                        >
+                          {num}
+                        </motion.span>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <p className="text-sm text-gray-500">Listen carefully...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-center gap-2 mb-4">
+                    <AnimatePresence mode="popLayout">
+                      {[...sequence].reverse().map((num, i) => (
+                        <motion.span
+                          key={i}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          variants={digitVariants}
+                          className="text-2xl font-mono bg-white p-2 rounded shadow"
+                        >
+                          {num}
+                        </motion.span>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    You should enter: {[...sequence].reverse().join(" ")}
+                  </p>
+                  <Button
+                    onClick={() => showModeTransition("reverse")}
+                    className="w-full"
+                  >
+                    Start Reverse Test
                   </Button>
                 </div>
               )}
-              <div className="flex justify-center mt-4">
-                <Progress
-                  value={(level / gameConfig[testMode].maxDigits) * 100}
-                  className="w-2/3"
-                />
-              </div>
             </div>
           )}
 
-          {/* Demo Screen */}
-          {stage === "reverseDemo" && (
+          {/* Gameplay Screen */}
+          {stage === "playing" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium flex items-center gap-2">
+                  {gameConfig[testMode].icon}
+                  {gameConfig[testMode].title}
+                </h3>
+                <div className="flex gap-2">
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    Level: {level}
+                  </span>
+                  <span className="text-sm bg-rose-100 text-rose-800 px-2 py-1 rounded">
+                    Mistakes: {mistakes}/2
+                  </span>
+                </div>
+              </div>
+
+              {showSequence ? (
+                <div className="bg-gray-100 rounded-lg p-6 text-center">
+                  <div className="flex justify-center gap-2">
+                    <AnimatePresence mode="popLayout">
+                      {sequence.map((num, i) => (
+                        <motion.span
+                          key={i}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          variants={digitVariants}
+                          className="text-4xl font-bold"
+                        >
+                          {num}
+                        </motion.span>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Listen carefully...
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Input
+                    type="text"
+                    placeholder={gameConfig[testMode].instruction}
+                    value={userInput}
+                    onChange={(e) =>
+                      setUserInput(e.target.value.replace(/\D/g, ""))
+                    }
+                    className="text-center text-lg py-6 font-mono"
+                    maxLength={level}
+                  />
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => playSequence(level)}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Replay
+                    </Button>
+                    <Button className="flex-1" onClick={handleSubmit}>
+                      Submit
+                    </Button>
+                  </div>
+
+                  {lastAction && (
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`text-center font-medium ${
+                        lastAction === "correct"
+                          ? "text-green-600"
+                          : "text-rose-600"
+                      }`}
+                    >
+                      {lastAction === "correct" ? "✓ Correct!" : "✗ Try again"}
+                    </motion.p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Completion Screen */}
+          {stage === "completed" && (
             <div className="space-y-6 text-center">
-              <h3 className="text-xl font-bold">Demo: Reverse Recall</h3>
-              <div className="text-4xl font-bold">{sequence.join(" ")}</div>
-              <Button
-                className="mt-4"
-                onClick={() => startGame("reverse")}
-              >
-                Start Reverse Recall
+              <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg">
+                <Award className="h-12 w-12 mx-auto text-yellow-500 mb-2" />
+                <h3 className="text-xl font-bold">Test Completed!</h3>
+                <p className="text-gray-600">
+                  You remembered {scores.forward} digits forward and{" "}
+                  {scores.reverse} digits in reverse
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="font-medium">Forward</p>
+                    <p className="text-2xl font-bold">{scores.forward}/9</p>
+                    <Progress
+                      value={(scores.forward / 9) * 100}
+                      className="h-2 mt-2"
+                    />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="font-medium">Reverse</p>
+                    <p className="text-2xl font-bold">{scores.reverse}/6</p>
+                    <Progress
+                      value={(scores.reverse / 6) * 100}
+                      className="h-2 mt-2"
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Button className="w-full">
+                ⬇️ click on next Challenge{" "}
+                <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           )}
-
-          {/* Completed Screen */}
-          {stage === "completed" && completedContent}
         </CardContent>
       </Card>
     </div>
