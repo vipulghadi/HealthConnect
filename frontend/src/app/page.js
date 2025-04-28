@@ -56,13 +56,18 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.4 }}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-2xl"
             />
-            <Link href="/iq-test" >
-            <Button size="lg" className="mr-4 cursor-pointer">
-              Let's Check Your IQ
-            </Button>
-          </Link>
-            
-            
+
+            <Link href="/iq-test" passHref>
+              <Button asChild size="lg" className="mr-4 cursor-pointer">
+                <a>Let's Check Your IQ</a>
+              </Button>
+            </Link>
+
+            <Link href="https://eq-test.onrender.com/" passHref>
+              <Button size="lg" className="mr-4 cursor-pointer">
+                <a href="https://eq-test.onrender.com/">Let's Check Your EQ</a>
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </section>
@@ -114,7 +119,6 @@ export default function Home() {
         </div>
 
         {/* Button to take the Health Test */}
-
       </section>
 
       {/* Features Section */}

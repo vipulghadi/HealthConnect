@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import KohTest from "@/components/kohs/KohsTest";
 import ImmediateMemoryTestPage from "@/components/memoryTest/MemoryTest";
 import PassAlongTest from "@/components/passalong/PassAlongTest";
 import PatternTest from "@/components/patternTest/PatternTest";
-
+import { PictureConstructionTest } from "@/components/pictureConstructionTest/PictureConstructionTest";
 // CustomSelect component remains unchanged
 const CustomSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,6 +64,7 @@ const GAMES = {
   kohs: <KohTest />,
   imt: <ImmediateMemoryTestPage />,
   pat: <PassAlongTest />,
+  pct: <PictureConstructionTest />,
   patternTest: <PatternTest />,
 };
 
@@ -82,7 +82,7 @@ export default function StartTestPage() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const games = ["kohs", "imt", "pat", "patternTest"];
+  const games = ["kohs", "imt", "pat", "pct", "patternTest"];
   const educationOptions = [
     { value: "literate", label: "Literate" },
     { value: "illiterate", label: "Illiterate" },
@@ -155,7 +155,9 @@ export default function StartTestPage() {
           (testData.PassAlongTest.questions.reduce(
             (sum, q) => sum + (q.score || 0),
             0
-          ) / totalPossibleScore) * 100;
+          ) /
+            totalPossibleScore) *
+          100;
       }
 
       // PatternTest: Use score directly, normalized
@@ -164,7 +166,9 @@ export default function StartTestPage() {
           (testData.PatternTest.questions.reduce(
             (sum, q) => sum + (q.score || 0),
             0
-          ) / 50) * 100; // Assuming max score of 50
+          ) /
+            50) *
+          100; // Assuming max score of 50
       }
 
       // Age adjustment
@@ -222,11 +226,7 @@ export default function StartTestPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const iq = calculateIQScore(
-          extraData,
-          parseInt(age),
-          educationLevel
-        );
+        const iq = calculateIQScore(extraData, parseInt(age), educationLevel);
         if (iq !== null) {
           setIqScore(iq);
         } else {
@@ -313,12 +313,16 @@ export default function StartTestPage() {
                     🎮 Welcome to the IQ Test! 🎮
                   </p>
                   <p className="mt-2 text-indigo-700">
-                    Complete these mental quests to unlock your brain's potential!
+                    Complete these mental quests to unlock your brain's
+                    potential!
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-1">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    className="space-y-1"
+                  >
                     <label className="block text-sm font-medium text-indigo-700">
                       👤 Player Name
                     </label>
@@ -330,7 +334,10 @@ export default function StartTestPage() {
                     />
                   </motion.div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-1">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    className="space-y-1"
+                  >
                     <label className="block text-sm font-medium text-indigo-700">
                       🎂 Player Age
                     </label>
@@ -343,7 +350,10 @@ export default function StartTestPage() {
                     />
                   </motion.div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-1">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    className="space-y-1"
+                  >
                     <label className="block text-sm font-medium text-indigo-700">
                       🎓 Education Level
                     </label>
@@ -404,11 +414,9 @@ export default function StartTestPage() {
                     Calculating IQ Score...
                   </p>
                 ) : (
-                  <p className="text-xl">
-                    Your IQ Score: {iqScore | "50"}
-                  </p>
+                  <p className="text-xl">Your IQ Score: {iqScore | "50"}</p>
                 )}
-        
+
                 <div className="flex justify-center gap-4">
                   <Button
                     onClick={handleRetry}
@@ -427,7 +435,10 @@ export default function StartTestPage() {
             ) : (
               <div>
                 <div>{GAMES[currTest]}</div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Button
                     className="w-full mt-4 py-6 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg"
                     onClick={() =>
