@@ -25,6 +25,26 @@ function generateSequence(length) {
   return Array.from({ length }, () => Math.floor(Math.random() * 9).toString());
 }
 
+// Function to calculate IQ score based on correct answers
+function calculateIQScore(correctAnswers, totalQuestions) {
+  const percentage = correctAnswers / totalQuestions;
+  // Simplified IQ mapping: 50% correct = IQ 100, each 10% above/below adjusts by 15 points
+  const iq = Math.round(100 + (percentage - 0.5) * 150);
+  return Math.max(70, Math.min(130, iq)); // Cap IQ between 70 and 130
+}
+
+// Function to generate suggestions based on performance
+function generateSuggestions(correctAnswers, totalQuestions, testMode) {
+  const percentage = correctAnswers / totalQuestions;
+  if (percentage >= 0.8) {
+    return `Excellent performance in ${testMode} recall! To further enhance your skills, try increasing the sequence length or practicing with distractions.`;
+  } else if (percentage >= 0.5) {
+    return `Good effort in ${testMode} recall. Practice with similar sequences daily to improve accuracy and speed. Apps like Lumosity can help.`;
+  } else {
+    return `Your ${testMode} recall needs improvement. Start with shorter sequences and gradually increase difficulty. Focus on concentration techniques.`;
+  }
+}
+
 export default function ImmediateMemoryTestPage() {
   // Game state
   const [stage, setStage] = useState("intro");
@@ -39,8 +59,10 @@ export default function ImmediateMemoryTestPage() {
   const [lastAction, setLastAction] = useState(null);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState("forward");
-  const [questionId, setQuestionId] = useState(0);
+  const [questionId, setQuestionId] = useState(1); // Start at 1 to match JSON format
   const [startTime, setStartTime] = useState(null);
+  const [totalCorrect, setTotalCorrect] = useState(0); // Track correct answers
+  const [totalQuestions, setTotalQuestions] = useState(0); // Track total questions
   const timerRef = useRef(null);
 
   // Game configuration
@@ -61,18 +83,28 @@ export default function ImmediateMemoryTestPage() {
 
   // Initialize from localStorage and clear memoryTest
   useEffect(() => {
-    // Clear existing memoryTest data and reset state variables
+    // Clear existing memoryTest data
     localStorage.removeItem("memoryTest");
+    localStorage.removeItem("memoryTestQuestions");
+    localStorage.removeItem("memoryGameScores");
 
-    // Reset scores to default values or retrieve from localStorage if available
-    const savedData = localStorage.getItem("memoryGameScores");
+    // Initialize KohsTest data
+    const savedData = localStorage.getItem("kohsTestData");
     if (savedData) {
-      setScores(JSON.parse(savedData));
+      const parsedData = JSON.parse(savedData);
+      setScores({
+        forward: parsedData.totalScore || 0,
+        reverse: parsedData.totalScore || 0,
+      });
+      setTotalCorrect(parsedData.questions?.filter(q => q.isCorrect).length || 0);
+      setTotalQuestions(parsedData.questions?.length || 0);
     } else {
-      setScores({ forward: 0, reverse: 0 }); // Default scores
+      setScores({ forward: 0, reverse: 0 });
+      setTotalCorrect(0);
+      setTotalQuestions(0);
     }
 
-    // Ensure other states are reset to initial values
+    // Reset other states
     setSequence([]);
     setUserInput("");
     setLevel(3);
@@ -84,45 +116,44 @@ export default function ImmediateMemoryTestPage() {
     setLastAction(null);
     setShowTransition(false);
     setTransitionDirection("forward");
-    setQuestionId(0);
+    setQuestionId(1);
     setStartTime(null);
 
-    // Cleanup function to clear the timer
+    // Cleanup timer
     return () => clearTimeout(timerRef.current);
-  }, []); // Empty dependency array ensures this only runs once on component mount
+  }, []);
 
-  // Save scores
-  const saveScores = () => {
-    localStorage.setItem("memoryGameScores", JSON.stringify(scores));
-  };
+  // Save KohsTest data to localStorage
+  const saveKohsTestData = (newQuestion) => {
+    const responseTime = startTime ? (Date.now() - startTime) / 1000 : 0; // Convert to seconds
+    const existingData = localStorage.getItem("kohsTestData");
+    let kohsTestData = existingData
+      ? JSON.parse(existingData)
+      : {
+          gameName: "KohsTest",
+          totalScore: 0,
+          totalTimeTaken: 0,
+          questions: [],
+        };
 
-  // Update localStorage with question data
-  const updateQuestionStorage = (isCorrect) => {
-    const responseTime = startTime ? Date.now() - startTime : 0;
-    const totalScore = scores.forward + scores.reverse;
+    // Update question data
+    kohsTestData.questions.push(newQuestion);
+    kohsTestData.totalScore = kohsTestData.questions.filter(q => q.isCorrect).length;
+    kohsTestData.totalTimeTaken = kohsTestData.questions.reduce(
+      (sum, q) => sum + q.responseTime,
+      0
+    );
 
-    const questionData = {
-      questionId,
-      isCorrect,
-      score: isCorrect ? sequence.length : 0,
-      testMode,
-      totalScore,
-      responseTime,
-      timestamp: new Date().toISOString(),
-    };
+    // Calculate IQ score
+    const correctAnswers = kohsTestData.questions.filter(q => q.isCorrect).length;
+    const totalQuestions = kohsTestData.questions.length;
+    kohsTestData.iqScore = calculateIQScore(correctAnswers, totalQuestions);
 
-    // Get existing questions or initialize new array
-    const existingData = localStorage.getItem("memoryTestQuestions");
-    const questions = existingData ? JSON.parse(existingData) : {};
-
-    // Add new question data to the appropriate question (with questionId as key)
-    if (!questions[questionId]) {
-      questions[questionId] = [];
-    }
-    questions[questionId].push(questionData);
+    // Add suggestions
+    kohsTestData.suggestions = generateSuggestions(correctAnswers, totalQuestions, testMode);
 
     // Save to localStorage
-    localStorage.setItem("memoryTestQuestions", JSON.stringify(questions));
+    localStorage.setItem("kohsTestData", JSON.stringify(kohsTestData));
   };
 
   // Play sequence with speech
@@ -160,7 +191,9 @@ export default function ImmediateMemoryTestPage() {
     setStage("playing");
     setLevel(3);
     setMistakes(0);
-    setQuestionId(0);
+    setQuestionId(1);
+    setTotalCorrect(0);
+    setTotalQuestions(0);
     playSequence(3);
   };
 
@@ -172,17 +205,27 @@ export default function ImmediateMemoryTestPage() {
         : userInput === [...sequence].reverse().join("");
 
     setLastAction(isCorrect ? "correct" : "wrong");
-    setQuestionId((prev) => prev + 1);
+    setTotalQuestions(prev => prev + 1);
+    if (isCorrect) setTotalCorrect(prev => prev + 1);
 
-    // Update localStorage with question data
-    updateQuestionStorage(isCorrect);
+    // Create question data
+    const responseTime = startTime ? (Date.now() - startTime) / 1000 : 0; // Convert to seconds
+    const questionData = {
+      questionId,
+      isCorrect,
+      responseTime,
+    };
+
+    // Save to KohsTest data
+    saveKohsTestData(questionData);
+
+    setQuestionId(prev => prev + 1);
 
     if (isCorrect) {
       // Update score if this is the longest sequence remembered
       if (sequence.length > scores[testMode]) {
         const newScores = { ...scores, [testMode]: sequence.length };
         setScores(newScores);
-        saveScores();
       }
 
       // Increase difficulty or switch modes
@@ -191,7 +234,6 @@ export default function ImmediateMemoryTestPage() {
         playSequence(level + 1);
       } else {
         if (testMode === "forward") {
-          // Show demo before switching to reverse
           setStage("reverseDemo");
           playSequence(3, true);
         } else {
@@ -201,7 +243,6 @@ export default function ImmediateMemoryTestPage() {
     } else {
       setMistakes(mistakes + 1);
       if (mistakes >= 1) {
-        // End after 2 mistakes
         if (testMode === "forward" && scores.forward < 9) {
           setStage("reverseDemo");
           playSequence(3, true);
@@ -221,13 +262,30 @@ export default function ImmediateMemoryTestPage() {
     exit: { opacity: 0, y: -20 },
   };
 
+  // Display results on completion
+  const kohsTestData = JSON.parse(localStorage.getItem("kohsTestData") || "{}");
+  const completedContent = (
+    <div className="space-y-6 text-center">
+      <h3 className="text-xl font-bold">Test Complete</h3>
+      <div className="text-left">
+        <p><strong>IQ Score:</strong> {kohsTestData.iqScore || "N/A"}</p>
+        <p><strong>Total Score:</strong> {kohsTestData.totalScore || 0}</p>
+        <p><strong>Total Time Taken:</strong> {kohsTestData.totalTimeTaken?.toFixed(2) || 0} seconds</p>
+        <p><strong>Suggestions:</strong> {kohsTestData.suggestions || "No suggestions available."}</p>
+      </div>
+      <div className="space-x-4">
+        <Button onClick={() => setStage("intro")}>Retry</Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
           <CardTitle className="text-2xl flex items-center gap-2">
             <Volume2 className="h-6 w-6" />
-            Immediate Memory Test
+            Kohs Memory Test
           </CardTitle>
           <div className="flex justify-between text-sm mt-2">
             <span>Forward: {scores.forward}/9</span>
@@ -328,14 +386,7 @@ export default function ImmediateMemoryTestPage() {
           )}
 
           {/* Completed Screen */}
-          {stage === "completed" && (
-            <div className="space-y-6 text-center">
-              <h3 className="text-xl font-bold">Test Complete</h3>
-              <div className="space-x-4">
-                <Button onClick={() => setStage("intro")}>Retry</Button>
-              </div>
-            </div>
-          )}
+          {stage === "completed" && completedContent}
         </CardContent>
       </Card>
     </div>
