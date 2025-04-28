@@ -59,7 +59,7 @@ export default function Tray({ grid, onMove, isRunning }) {
         style={style}
         {...attributes}
         {...listeners}
-        className={`w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border border-gray-400 rounded-md
+        className={`w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border rounded-md
           ${cell !== "empty" && isRunning ? "cursor-move hover:scale-105" : ""}
           ${isInvalid ? "animate-shake" : ""}`}
         aria-label={
@@ -83,7 +83,7 @@ export default function Tray({ grid, onMove, isRunning }) {
   }
 
   return (
-    <Card className=" bg-pink-300 w-1/2  flex justify-center items-center  ">
+    <Card className="  w-full  flex justify-center items-center  ">
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext
           items={flatGrid.map((item) => item.id)}
