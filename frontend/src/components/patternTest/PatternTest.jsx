@@ -347,7 +347,7 @@ const PatternTest = () => {
         isCorrect: false,
         responseTime: elapsedTime,
         score: 0,
-        answer: userPoints,
+        
       };
       setPendingResponse(response);
       setScore(0);
@@ -370,7 +370,7 @@ const PatternTest = () => {
       isCorrect: isCorrect,
       responseTime: elapsedTime,
       score: newScore,
-      answer: userPoints,
+    
     };
     setPendingResponse(response);
     setScore(newScore);
@@ -409,7 +409,7 @@ const PatternTest = () => {
           isCorrect: false,
           responseTime: elapsedTime,
           score: 0,
-          answer: userPoints,
+          
         };
         saveResponse(defaultResponse);
       }
@@ -438,7 +438,7 @@ const PatternTest = () => {
           isCorrect: false,
           responseTime: elapsedTime,
           score: 0,
-          answer: userPoints,
+    
         };
         saveResponse(defaultResponse);
       }

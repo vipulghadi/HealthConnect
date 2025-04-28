@@ -80,16 +80,16 @@ export default function PassAlongTest() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Clear existing data to start fresh
-      localStorage.removeItem("PassAlong Test");
+      localStorage.removeItem("PassAlongTest");
 
       // Initialize localStorage with default structure
       const initialData = {
-        gameName: "PassAlong Test",
+        gameName: "PassAlongTest",
         totalScore: 0,
         totalTimeTaken: 0,
         questions: [],
       };
-      localStorage.setItem("PassAlong Test", JSON.stringify(initialData));
+      localStorage.setItem("PassAlongTest", JSON.stringify(initialData));
       setResponses([]);
       setGrid(createInitialGrid());
       setScore(null);
@@ -104,7 +104,7 @@ export default function PassAlongTest() {
   // Load responses when changing designs
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedData = localStorage.getItem("PassAlong Test");
+      const savedData = localStorage.getItem("PassAlongTest");
       if (savedData) {
         const testData = JSON.parse(savedData);
         setResponses(testData.questions || []);
@@ -127,11 +127,11 @@ export default function PassAlongTest() {
   // Save response to localStorage
   function saveResponse(response) {
     if (typeof window !== "undefined") {
-      const savedData = localStorage.getItem("PassAlong Test");
+      const savedData = localStorage.getItem("PassAlongTest");
       let testData = savedData
         ? JSON.parse(savedData)
         : {
-            gameName: "PassAlong Test",
+            gameName: "PassAlongTest",
             totalScore: 0,
             totalTimeTaken: 0,
             questions: [],
@@ -150,7 +150,7 @@ export default function PassAlongTest() {
       testData.totalTimeTaken = testData.questions.reduce((sum, q) => sum + q.responseTime, 0);
 
       // Save to localStorage
-      localStorage.setItem("PassAlong Test", JSON.stringify(testData));
+      localStorage.setItem("PassAlongTest", JSON.stringify(testData));
       setResponses(testData.questions);
     }
   }
