@@ -405,7 +405,7 @@ export default function StartTestPage() {
                   </p>
                 ) : (
                   <p className="text-xl">
-                    Your IQ Score: {iqScore !== null ? iqScore : "N/A"}
+                    Your IQ Score: {iqScore | "50"}
                   </p>
                 )}
         
