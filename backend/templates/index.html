@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Drawing Test</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</head>
+<body>
+
+    <h1>Memory Drawing Test</h1>
+
+    <div id="timer">5</div>
+
+    <div id="refImage">
+        <p>Memorize this image:</p>
+        <img id="reference" src="/static/reference.png" width="256">
+    </div>
+
+    <div id="canvasSection">
+        <p>Now draw what you saw:</p>
+        <canvas id="canvas" width="256" height="256"></canvas><br>
+        <div id="actionButtons" style="display: none;">
+            <button class="button" onclick="checkAccuracy()">Check Accuracy</button>
+            <button class="button button-secondary" onclick="finalSubmit()">Final Submit</button>
+            <button class="button" onclick="clearCanvas()">Clear Canvas</button>
+        </div>
+    </div>
+
+    <div id="result"></div>
+</body>
+</html>

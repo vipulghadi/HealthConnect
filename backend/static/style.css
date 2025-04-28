@@ -1,0 +1,81 @@
+/* Global Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f3f4f6;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+/* Timer and reference image section */
+#timer {
+    font-size: 2em;
+    color: #007BFF;
+    margin-top: 20px;
+}
+
+#refImage {
+    display: none;
+    margin-top: 20px;
+    background-color: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#reference {
+    max-width: 100%;
+    border: 2px solid #ffffff;
+    border-radius: 5px;
+}
+
+#canvasSection {
+    display: none;
+    margin-top: 20px;
+}
+
+canvas {
+    border: 2px solid #333;
+    background-color: #fff;
+    margin-bottom: 20px;
+    cursor: crosshair;
+}
+
+.button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #218838;
+}
+
+.button:active {
+    background-color: #1e7e34;
+}
+
+.button-secondary {
+    background-color: #007bff;
+}
+
+.button-secondary:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    font-size: 1.5em;
+    margin-top: 20px;
+    color: #007BFF;
+}
