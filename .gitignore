@@ -1,7 +1,14 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+/frontend/node_modules
+/backend/.venv
+/frontend/.venv
+/frontend/.env
+/backend/.env
+
+/frontend/.next
+
 /.pnp
 .pnp.*
 .yarn/*
@@ -35,7 +42,7 @@ yarn-error.log*
 
 # vercel
 .vercel
-
+.venv
 # typescript
 *.tsbuildinfo
 next-env.d.ts

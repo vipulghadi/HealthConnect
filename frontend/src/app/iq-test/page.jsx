@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,8 @@ import KohTest from "@/components/kohs/KohsTest";
 import ImmediateMemoryTestPage from "@/components/memoryTest/MemoryTest";
 import PassAlongTest from "@/components/passalong/PassAlongTest";
 import Result from "@/components/TestResult/Result";
-import ChatbotPage from "../chatbot/page"; // assuming you have this
-import { ImagePuzzleGame } from "@/components/client/common/image-puzzle-game";
+import PatternTest from "@/components/patternTest/PatternTest";
+
 const CustomSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +19,7 @@ const CustomSelect = ({ value, onChange, options }) => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-indigo-300 focus:ring-indigo-200"
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
       >
         {value
           ? options.find((o) => o.value === value)?.label
@@ -65,7 +65,7 @@ const GAMES = {
   kohs: <KohTest />,
   imt: <ImmediateMemoryTestPage />,
   pat: <PassAlongTest />,
-  imgpz: <ImagePuzzleGame />,
+  patternTest: <PatternTest />,
 };
 
 export default function StartTestPage() {
@@ -77,9 +77,9 @@ export default function StartTestPage() {
   const [testResults, setTestResults] = useState([]);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isEQTest, setIsEQTest] = useState(false); // <-- NEW state for EQ Test
+  const [iqScore, setIqScore] = useState(null); // <-- State for IQ score
 
-  const games = ["kohs", "imt", "pat", "imgpz"];
+  const games = ["kohs", "imt", "pat", "patternTest"];
   const educationOptions = [
     { value: "literate", label: "Literate" },
     { value: "illiterate", label: "Illiterate" },
@@ -110,12 +110,42 @@ export default function StartTestPage() {
       setCurrTest(games[nextGameIndex]);
       setCurrentGameIndex(nextGameIndex);
     } else {
+      // Calculate total score after all games are completed
+      calculateTotalScore(newResults);
       setIsTestCompleted(true);
     }
   };
 
-  const handleEQTest = () => {
-    setIsEQTest(true); // switch to EQ test (chatbot)
+  const calculateTotalScore = (newResults) => {
+    try {
+      let totalScore = 0;
+
+      newResults.forEach((gameResult) => {
+        const { gameId, questions } = gameResult;
+        questions.forEach((question) => {
+          if (question.score) {
+            totalScore += question.score;
+          }
+        });
+      });
+
+      setIqScore(totalScore);
+    } catch (error) {
+      console.error("Error calculating total score:", error);
+    }
+  };
+
+  const handleRetry = () => {
+    setIsTestCompleted(false);
+    setTestResults([]);
+    setIqScore(null);
+    setCurrentGameIndex(0);
+    setCurrTest(games[0]);
+  };
+
+  const handleGoHome = () => {
+    // Navigate back to the home page or reset
+    window.location.href = "/";
   };
 
   return (
@@ -141,13 +171,11 @@ export default function StartTestPage() {
               className="flex justify-center"
             >
               <h1 className="text-3xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                🧠 Real Time IQ And EQ Test 🚀
+                🧠 Real Time IQ Test 🚀
               </h1>
             </motion.div>
 
-            {isEQTest ? (
-              <Chatbot /> // <--- If EQ selected, directly show chatbot
-            ) : currTest === "" ? (
+            {currTest === "" ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isAnimating ? 0 : 1 }}
@@ -155,18 +183,12 @@ export default function StartTestPage() {
               >
                 <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                   <p className="text-indigo-800 font-medium">
-                    🎮 Welcome to the IQ / EQ Test ! 🎮
+                    🎮 Welcome to the IQ Test! 🎮
                   </p>
                   <p className="mt-2 text-indigo-700">
                     Complete these mental quests to unlock your brain's
                     potential!
                   </p>
-                </div>
-
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex items-center gap-2">
-                    {/* <Sparkles className="text-yellow-500" size={16} /> */}
-                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -216,7 +238,6 @@ export default function StartTestPage() {
                   </motion.div>
                 </div>
 
-                {/* Start Buttons */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -242,21 +263,30 @@ export default function StartTestPage() {
                         Loading Adventure...
                       </span>
                     ) : (
-                      "🚀 Check your IQ!"
+                      "🚀 Start IQ Test!"
                     )}
-                  </Button>
-
-                  {/* NEW EQ Button */}
-                  <Button
-                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
-                    onClick={handleEQTest}
-                  >
-                    🎭 Start EQ Test
                   </Button>
                 </motion.div>
               </motion.div>
             ) : isTestCompleted ? (
-              <Result testResults={testResults} />
+              <div className="text-center space-y-4">
+                <h2 className="text-2xl font-bold text-indigo-800">Test Completed</h2>
+                <p className="text-xl">Your IQ Score: {iqScore}</p>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={handleRetry}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg"
+                  >
+                    Retry Test
+                  </Button>
+                  <Button
+                    onClick={handleGoHome}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-lg"
+                  >
+                    Go Home
+                  </Button>
+                </div>
+              </div>
             ) : (
               <div>
                 <div>{GAMES[currTest]}</div>

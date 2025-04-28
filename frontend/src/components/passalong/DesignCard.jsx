@@ -10,8 +10,8 @@ import { motion } from "framer-motion";
 
 export default function DesignCard({ design }) {
   return (
-    <Card className="w-full bg-gradient-to-br from-amber-50 to-amber-100 backdrop-blur-sm shadow-lg overflow-hidden border-2 border-amber-300/50">
-      <CardHeader className="p-4 pb-2">
+    <Card className="w-full  border-2 ">
+      <CardHeader className="">
         <CardTitle className="text-lg font-semibold text-center text-amber-900">
           Target Pattern
           <TooltipProvider delayDuration={300}>
@@ -30,7 +30,7 @@ export default function DesignCard({ design }) {
           </TooltipProvider>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent className=" pt-0">
         <div className="grid grid-cols-3 gap-3 p-2 bg-amber-100/30 rounded-lg">
           {design.map((row, i) => {
             return row.map((cell, j) => {
